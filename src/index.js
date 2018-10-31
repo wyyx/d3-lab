@@ -31,7 +31,7 @@ d3.tsv('./d3.tsv').then(function(data) {
 				return d.value
 			})
 		])
-		.range([ 0, height ])
+		.range([ height, 0 ])
 
 	var chart = d3
 		.select('.chart')
@@ -46,22 +46,24 @@ d3.tsv('./d3.tsv').then(function(data) {
 
 	bar
 		.append('rect')
+		.attr('class', 'bar')
 		.attr('y', function(d) {
-			return height - y(d.value)
+			return y(d.value)
 		})
 		.attr('height', function(d) {
-			return y(d.value)
+			return height - y(d.value)
 		})
 		.attr('width', x.bandwidth)
 
-	bar
-		.append('text')
-		.attr('x', x.bandwidth() / 2)
-		.attr('y', function(d) {
-			return height - y(d.value) + 3
-		})
-		.attr('dy', '.75em')
-		.text(function(d) {
-			return d.value
-		})
+	// Create axes
+	var xAxis = d3.axisBottom(x)
+	var yAxis = d3.axisLeft(y)
+
+	chart
+		.append('g')
+		.attr('class', 'x axis')
+		.attr('transform', 'translate(0,' + height + ')')
+		.call(xAxis)
+
+	chart.append('g').attr('class', 'y axis').call(yAxis)
 })
