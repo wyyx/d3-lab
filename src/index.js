@@ -57,7 +57,7 @@ d3.tsv('./d3.tsv').then(function(data) {
 
 	// Create axes
 	var xAxis = d3.axisBottom(x)
-	var yAxis = d3.axisLeft(y)
+	var yAxis = d3.axisLeft(y).ticks(10, '%')
 
 	chart
 		.append('g')
@@ -65,5 +65,15 @@ d3.tsv('./d3.tsv').then(function(data) {
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(xAxis)
 
-	chart.append('g').attr('class', 'y axis').call(yAxis)
+	chart
+		.append('g')
+		.attr('class', 'y axis')
+		.call(yAxis)
+		.append('text')
+		.attr('fill', 'black')
+		.attr('transform', 'rotate(-90)')
+		.attr('y', 6)
+		.attr('dy', '.71em')
+		.style('text-anchor', 'end')
+		.text('Frequency')
 })
