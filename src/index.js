@@ -9,10 +9,10 @@ d3.tsv('./d3.tsv').then(function(data) {
 		d.value = +d.value
 	})
 
-	var width = 420,
-		barHeight = 20
+	var width = 960,
+		height = 500
 
-	var x = d3
+	var y = d3
 		.scaleLinear()
 		.domain([
 			0,
@@ -20,28 +20,33 @@ d3.tsv('./d3.tsv').then(function(data) {
 				return d.value
 			})
 		])
-		.range([ 0, width ])
+		.range([ 0, height ])
 
-	var chart = d3.select('.chart').attr('width', width).attr('height', barHeight * data.length)
+	var chart = d3.select('.chart').attr('width', width).attr('height', height)
+
+	var barWidth = width / data.length
 
 	var bar = chart.selectAll('g').data(data).enter().append('g').attr('transform', function(d, i) {
-		return 'translate(0,' + i * barHeight + ')'
+		return 'translate(' + i * barWidth + ',0)'
 	})
 
 	bar
 		.append('rect')
-		.attr('width', function(d) {
-			return x(d.value)
+		.attr('y', function(d) {
+			return height - y(d.value)
 		})
-		.attr('height', barHeight - 1)
+		.attr('height', function(d) {
+			return y(d.value)
+		})
+		.attr('width', barWidth - 1)
 
 	bar
 		.append('text')
-		.attr('x', function(d) {
-			return x(d.value) - 3
+		.attr('x', barWidth / 2)
+		.attr('y', function(d) {
+			return height - y(d.value) + 3
 		})
-		.attr('y', barHeight / 2)
-		.attr('dy', '.35em')
+		.attr('dy', '.75em')
 		.text(function(d) {
 			return d.value
 		})
