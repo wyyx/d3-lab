@@ -14,3 +14,8 @@ circleEnter.attr('cx', function(d, i) {
 circleEnter.attr('r', function(d) {
 	return Math.sqrt(d)
 })
+
+setTimeout(() => {
+	var circle = svg.selectAll('circle').data([ 32, 57 ])
+	circle.exit().remove()
+}, 2000)
