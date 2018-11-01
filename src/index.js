@@ -3,19 +3,33 @@ import * as d3 from 'd3'
 
 var svg = d3.select('svg')
 
-var circle = svg.selectAll('circle').data([ 32, 57, 112, 293 ])
+var data = [ 32, 57, 112, 293 ]
 
-var circleEnter = circle.enter().append('circle')
+setInterval(() => {
+	var circle = svg.selectAll('circle').data(data)
 
-circleEnter.attr('cy', 60)
-circleEnter.attr('cx', function(d, i) {
-	return i * 100 + 30
-})
-circleEnter.attr('r', function(d) {
-	return Math.sqrt(d)
-})
-
-setTimeout(() => {
-	var circle = svg.selectAll('circle').data([ 32, 57 ])
+	// remove
 	circle.exit().remove()
-}, 2000)
+
+	// add and update
+	circle
+		.enter()
+		.append('circle')
+		.attr('r', 20)
+		.attr('cy', 50)
+		.merge(circle)
+		.attr('cx', function(d, i) {
+			return d
+		})
+
+	var newData = Math.random() * 670 + 50
+	var needAdd = Math.random() - 0.5 > 0 ? true : false
+	var index = Math.floor(Math.random() * data.length)
+	console.log('data.length', data.length)
+
+	if (needAdd) {
+		data.splice(index, 0, newData)
+	} else {
+		data.splice(index, 1)
+	}
+}, 500)
