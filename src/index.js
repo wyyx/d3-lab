@@ -11,7 +11,9 @@ var svg = d3.select('svg'),
 function update(data) {
 	// DATA JOIN
 	// Join new data with old elements, if any.
-	var text = g.selectAll('text').data(data)
+	var text = g.selectAll('text').data(data, function(d) {
+		return d
+	})
 
 	// UPDATE
 	// Update old elements as needed.
@@ -27,13 +29,13 @@ function update(data) {
 		.enter()
 		.append('text')
 		.attr('class', 'enter')
-		.attr('x', function(d, i) {
-			return i * 32
-		})
 		.attr('dy', '.35em')
-		.merge(text)
 		.text(function(d) {
 			return d
+		})
+		.merge(text)
+		.attr('x', function(d, i) {
+			return i * 32
 		})
 
 	// EXIT
