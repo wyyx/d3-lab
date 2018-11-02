@@ -9,38 +9,49 @@ var svg = d3.select('svg'),
 	g = svg.append('g').attr('transform', 'translate(32,' + height / 2 + ')')
 
 function update(data) {
-	// DATA JOIN
-	// Join new data with old elements, if any.
+	var t = d3.transition().duration(750)
+
+	// JOIN new data with old elements.
 	var text = g.selectAll('text').data(data, function(d) {
 		return d
 	})
 
-	// UPDATE
-	// Update old elements as needed.
-	text.attr('class', 'update')
+	// EXIT old elements not present in new data.
+	text
+		.exit()
+		.attr('class', 'exit')
+		.transition(t)
+		.attr('y', 60)
+		.style('fill-opacity', 1e-6)
+		.remove()
 
-	// ENTER
-	// Create new elements as needed.
-	//
-	// ENTER + UPDATE
-	// After merging the entered elements with the update selection,
-	// apply operations to both.
+	// UPDATE old elements present in new data.
+	text
+		.attr('class', 'update')
+		.attr('y', 0)
+		.style('fill-opacity', 1)
+		.transition(t)
+		.attr('x', function(d, i) {
+			return i * 32
+		})
+
+	// ENTER new elements present in new data.
 	text
 		.enter()
 		.append('text')
 		.attr('class', 'enter')
 		.attr('dy', '.35em')
-		.text(function(d) {
-			return d
-		})
-		.merge(text)
+		.attr('y', -60)
 		.attr('x', function(d, i) {
 			return i * 32
 		})
-
-	// EXIT
-	// Remove old elements as needed.
-	text.exit().remove()
+		.style('fill-opacity', 1e-6)
+		.text(function(d) {
+			return d
+		})
+		.transition(t)
+		.attr('y', 0)
+		.style('fill-opacity', 1)
 }
 
 // The initial display.
