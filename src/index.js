@@ -20,6 +20,7 @@ var color = d3
 	.domain([ 0, chartdata.length * 0.33, chartdata.length * 0.66, chartdata.length ])
 	.range([ '#d6e9c6', '#bce8f1', '#faebcc', '#ebccd1' ])
 
+var dynamicColor
 d3
 	.select('#bar-chart')
 	.append('svg')
@@ -42,4 +43,11 @@ d3
 	})
 	.attr('y', function(data) {
 		return height - y(data)
+	})
+	.on('mouseover', function(data) {
+		dynamicColor = this.style.fill
+		d3.select(this).style('fill', '#3c763d')
+	})
+	.on('mouseout', function(data) {
+		d3.select(this).style('fill', dynamicColor)
 	})
