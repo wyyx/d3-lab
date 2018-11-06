@@ -12,15 +12,18 @@ var chartdata2 = [410, 370, 330, 270, 240, 220, 200, 180, 165, 150, 135, 130,
 
 var chartdata = chartdata1
 
-//  the size of the overall svg element
-var height = 200,
-	width = 720,
-	//  the width of each bar and the offset between each bar
+// Margin and chart size
+var margin = { top: 30, right: 10, bottom: 30, left: 50 }
+
+var height = 400 - margin.top - margin.bottom,
+	width = 720 - margin.left - margin.right,
 	barWidth = 40,
 	barOffset = 20
 
-var x = d3.scaleBand().domain(d3.range(0, chartdata.length)).range([ 0, 720 ])
-var y = d3.scaleLinear().domain([ 0, d3.max(chartdata) ]).range([ 0, 200 ])
+// Scales
+var x = d3.scaleBand().domain(d3.range(0, chartdata.length)).range([ 0, width ])
+var y = d3.scaleLinear().domain([ 0, d3.max(chartdata) ]).range([ 0, height ])
+var yAxisScale = d3.scaleLinear().domain([ 0, d3.max(chartdata) ]).range([ height, 0 ])
 var color = d3
 	.scaleLinear()
 	.domain([ 0, chartdata.length * 0.33, chartdata.length * 0.66, chartdata.length ])
@@ -28,16 +31,39 @@ var color = d3
 
 var dynamicColor
 
+// Canvas
 var svg = d3
 	.select('#bar-chart')
 	.append('svg')
-	.attr('width', width)
-	.attr('height', height)
+	.attr('width', width + margin.left + margin.right)
+	.attr('height', height + margin.top + margin.bottom)
 	.style('background', '#dff0d8')
 
+// Chart
+var g = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
+
+// Add axes
+var xAxis = d3.axisBottom(x)
+var yAxis = d3.axisLeft(yAxisScale)
+
+var h = g
+	.append('g')
+	.attr('class', 'x axis')
+	.call(xAxis)
+	.attr('transform', `translate(0, ${height + 10})`)
+
+h.selectAll('path').style('stroke', '#3c763d')
+h.selectAll('line').style('stroke', '#3c763d')
+
+var v = g.append('g').attr('class', 'y axis').call(yAxis).attr('transform', `translate(-10, 0)`)
+
+v.selectAll('path').style('stroke', '#3c763d')
+v.selectAll('line').style('stroke', '#3c763d')
+
+// Update chart function
 function updateChart(data) {
 	// JOIN new data with old elements.
-	var chart = svg.selectAll('rect').data(data)
+	var chart = g.selectAll('rect').data(data)
 
 	// EXIT old elements not present in new data.
 	chart.exit().remove()
