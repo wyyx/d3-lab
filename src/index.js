@@ -1,47 +1,125 @@
 import './styles.scss'
 import * as d3 from 'd3'
 
-var vis = d3.select('#graph').append('svg')
+var fields = function() {
+	var currentTime, hour, minute, second
+	currentTime = new Date()
+	second = currentTime.getSeconds()
+	minute = currentTime.getMinutes()
+	hour = currentTime.getHours() + minute / 60
 
-var w = 900,
-	h = 400
-vis.attr('width', w).attr('height', h)
+	return [
+		{
+			unit: 'seconds',
+			numeric: second
+		},
+		{
+			unit: 'minutes',
+			numeric: minute
+		},
+		{
+			unit: 'hours',
+			numeric: hour
+		}
+	]
+}
 
-var nodes = [ { x: 30, y: 50 }, { x: 50, y: 80 }, { x: 90, y: 120 } ]
+var width, height, offSetX, offSetY, pi, scaleSecs, scaleMins, scaleHours
+width = 400
+height = 200
+offSetX = 150
+offSetY = 100
 
-vis
-	.selectAll('circle')
-	.data(nodes)
-	.enter()
+pi = Math.PI
+scaleSecs = d3.scaleLinear().domain([ 0, 59 + 999 / 1000 ]).range([ 0, 2 * pi ])
+scaleMins = d3.scaleLinear().domain([ 0, 59 + 59 / 60 ]).range([ 0, 2 * pi ])
+scaleHours = d3.scaleLinear().domain([ 0, 11 + 59 / 60 ]).range([ 0, 2 * pi ])
+
+var vis, clockGroup
+
+vis = d3.selectAll('.chart').append('svg').attr('width', width).attr('height', height)
+
+clockGroup = vis.append('g').attr('transform', 'translate(' + offSetX + ',' + offSetY + ')')
+
+clockGroup
 	.append('circle')
-	.attr('class', 'nodes')
-	.attr('cx', function(d) {
-		return d.x
-	})
-	.attr('cy', function(d) {
-		return d.y
-	})
-	.attr('r', '10px')
-	.attr('fill', 'black')
+	.attr('x', 0)
+	.attr('y', 0)
+	.attr('r', 80)
+	.attr('fill', 'none')
+	.attr('class', 'clock outercircle')
+	.attr('stroke', 'black')
+	.attr('stroke-width', 2)
 
-var links = [ { source: nodes[0], target: nodes[1] }, { source: nodes[2], target: nodes[1] } ]
+clockGroup.append('circle').attr('r', 4).attr('fill', 'black').attr('class', 'clock innercircle')
 
-vis
-	.selectAll('.line')
-	.data(links)
-	.enter()
-	.append('line')
-	.attr('x1', function(d) {
-		return d.source.x
-	})
-	.attr('y1', function(d) {
-		return d.source.y
-	})
-	.attr('x2', function(d) {
-		return d.target.x
-	})
-	.attr('y2', function(d) {
-		return d.target.y
-	})
-	.style('stroke', 'rgb(6,120,155)')
-	.style('stroke-width', '3px')
+function render(data) {
+	var hourArc, minuteArc, secondArc
+
+	clockGroup.selectAll('.clockhand').remove()
+
+	secondArc = d3
+		.arc()
+		.innerRadius(0)
+		.outerRadius(70)
+		.startAngle(function(d) {
+			return scaleSecs(d.numeric)
+		})
+		.endAngle(function(d) {
+			return scaleSecs(d.numeric)
+		})
+
+	minuteArc = d3
+		.arc()
+		.innerRadius(0)
+		.outerRadius(70)
+		.startAngle(function(d) {
+			return scaleMins(d.numeric)
+		})
+		.endAngle(function(d) {
+			return scaleMins(d.numeric)
+		})
+
+	hourArc = d3
+		.arc()
+		.innerRadius(0)
+		.outerRadius(50)
+		.startAngle(function(d) {
+			return scaleHours(d.numeric)
+		})
+		.endAngle(function(d) {
+			return scaleHours(d.numeric)
+		})
+
+	clockGroup
+		.selectAll('.clockhand')
+		.data(data)
+		.enter()
+		.append('path')
+		.attr('d', function(d) {
+			if (d.unit === 'seconds') {
+				return secondArc(d)
+			} else if (d.unit === 'minutes') {
+				return minuteArc(d)
+			} else if (d.unit === 'hours') {
+				return hourArc(d)
+			}
+		})
+		.attr('class', 'clockhand')
+		.attr('stroke', 'black')
+		.attr('stroke-width', function(d) {
+			if (d.unit === 'seconds') {
+				return 2
+			} else if (d.unit === 'minutes') {
+				return 3
+			} else if (d.unit === 'hours') {
+				return 3
+			}
+		})
+		.attr('fill', 'none')
+}
+
+setInterval(function() {
+	var data = fields()
+	return render(data)
+}, 1000)
