@@ -1,125 +1,87 @@
 import './styles.scss'
 import * as d3 from 'd3'
 
-var fields = function() {
-	var currentTime, hour, minute, second
-	currentTime = new Date()
-	second = currentTime.getSeconds()
-	minute = currentTime.getMinutes()
-	hour = currentTime.getHours() + minute / 60
+class Network {
+	constructor() {
+		// variables we want to access
+		// in multiple places of Network
+		this.width = 960
+		this.height = 800
+		// allData will store the unfiltered data
+		this.allData = []
+		this.curLinksData = []
+		this.curNodesData = []
+		this.linkedByIndex = {}
+		// these will hold the svg groups for
+		// accessing the nodes and links display
+		this.nodesG = null
+		this.linksG = null
+		// these will point to the circles and lines
+		// of the nodes and links
+		this.node = null
+		this.link = null
+		// variables to refect the current settings
+		// of the visualization
+		this.layout = 'force'
+		this.filter = 'all'
+		this.sort = 'songs'
+		// groupCenters will store our radial layout for
+		// the group by artist layout.
+		this.groupCenters = null
 
-	return [
-		{
-			unit: 'seconds',
-			numeric: second
-		},
-		{
-			unit: 'minutes',
-			numeric: minute
-		},
-		{
-			unit: 'hours',
-			numeric: hour
+		// our force directed layout
+		this.force = d3.layout.force()
+		// color function used to color nodes
+		this.nodeColors = d3.scale.category20()
+		// tooltip used to display details
+		this.tooltip = Tooltip('vis-tooltip', 230)
+	}
+
+	network(selection, data) {}
+
+	update() {
+		// filter data to show based on current filter settings.
+		curNodesData = filterNodes(allData.nodes)
+		curLinksData = filterLinks(allData.links, curNodesData)
+
+		// sort nodes based on current sort and update centers for
+		// radial layout
+		if (layout == 'radial') {
+			artists = sortedArtists(curNodesData, curLinksData)
+			updateCenters(artists)
 		}
-	]
+
+		// reset nodes in force layout
+		force.nodes(curNodesData)
+
+		// enter / exit for nodes
+		updateNodes()
+
+		// always show links in force layout
+		if (layout == 'force') {
+			force.links(curLinksData)
+			updateLinks()
+		} else {
+			// reset links so they do not interfere with
+			// other layouts. updateLinks() will be called when
+			// force is done animating.
+			force.links([])
+			// if present, remove them from svg
+			if (link) {
+				link.data([]).exit().remove()
+				link = null
+			}
+		}
+
+		// start me up!
+		force.start()
+	}
+
+	toggleLayout(newLayout) {}
 }
 
-var width, height, offSetX, offSetY, pi, scaleSecs, scaleMins, scaleHours
-width = 400
-height = 200
-offSetX = 150
-offSetY = 100
+var myNetwork = new Network()
 
-pi = Math.PI
-scaleSecs = d3.scaleLinear().domain([ 0, 59 + 999 / 1000 ]).range([ 0, 2 * pi ])
-scaleMins = d3.scaleLinear().domain([ 0, 59 + 59 / 60 ]).range([ 0, 2 * pi ])
-scaleHours = d3.scaleLinear().domain([ 0, 11 + 59 / 60 ]).range([ 0, 2 * pi ])
-
-var vis, clockGroup
-
-vis = d3.selectAll('.chart').append('svg').attr('width', width).attr('height', height)
-
-clockGroup = vis.append('g').attr('transform', 'translate(' + offSetX + ',' + offSetY + ')')
-
-clockGroup
-	.append('circle')
-	.attr('x', 0)
-	.attr('y', 0)
-	.attr('r', 80)
-	.attr('fill', 'none')
-	.attr('class', 'clock outercircle')
-	.attr('stroke', 'black')
-	.attr('stroke-width', 2)
-
-clockGroup.append('circle').attr('r', 4).attr('fill', 'black').attr('class', 'clock innercircle')
-
-function render(data) {
-	var hourArc, minuteArc, secondArc
-
-	clockGroup.selectAll('.clockhand').remove()
-
-	secondArc = d3
-		.arc()
-		.innerRadius(0)
-		.outerRadius(70)
-		.startAngle(function(d) {
-			return scaleSecs(d.numeric)
-		})
-		.endAngle(function(d) {
-			return scaleSecs(d.numeric)
-		})
-
-	minuteArc = d3
-		.arc()
-		.innerRadius(0)
-		.outerRadius(70)
-		.startAngle(function(d) {
-			return scaleMins(d.numeric)
-		})
-		.endAngle(function(d) {
-			return scaleMins(d.numeric)
-		})
-
-	hourArc = d3
-		.arc()
-		.innerRadius(0)
-		.outerRadius(50)
-		.startAngle(function(d) {
-			return scaleHours(d.numeric)
-		})
-		.endAngle(function(d) {
-			return scaleHours(d.numeric)
-		})
-
-	clockGroup
-		.selectAll('.clockhand')
-		.data(data)
-		.enter()
-		.append('path')
-		.attr('d', function(d) {
-			if (d.unit === 'seconds') {
-				return secondArc(d)
-			} else if (d.unit === 'minutes') {
-				return minuteArc(d)
-			} else if (d.unit === 'hours') {
-				return hourArc(d)
-			}
-		})
-		.attr('class', 'clockhand')
-		.attr('stroke', 'black')
-		.attr('stroke-width', function(d) {
-			if (d.unit === 'seconds') {
-				return 2
-			} else if (d.unit === 'minutes') {
-				return 3
-			} else if (d.unit === 'hours') {
-				return 3
-			}
-		})
-		.attr('fill', 'none')
-}
-
-setInterval(function() {
-	var data = fields()
-	return render(data)
-}, 1000)
+d3.json('./data/songs.json').then(data => {
+	myNetwork.network('//vis', json)
+})
