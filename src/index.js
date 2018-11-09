@@ -1,87 +1,52 @@
 import './styles.scss'
 import * as d3 from 'd3'
 
-class Network {
-	constructor() {
-		// variables we want to access
-		// in multiple places of Network
-		this.width = 960
-		this.height = 800
-		// allData will store the unfiltered data
-		this.allData = []
-		this.curLinksData = []
-		this.curNodesData = []
-		this.linkedByIndex = {}
-		// these will hold the svg groups for
-		// accessing the nodes and links display
-		this.nodesG = null
-		this.linksG = null
-		// these will point to the circles and lines
-		// of the nodes and links
-		this.node = null
-		this.link = null
-		// variables to refect the current settings
-		// of the visualization
-		this.layout = 'force'
-		this.filter = 'all'
-		this.sort = 'songs'
-		// groupCenters will store our radial layout for
-		// the group by artist layout.
-		this.groupCenters = null
+var n = 40,
+	random = d3.randomNormal(0, 0.2),
+	data = d3.range(n).map(random)
 
-		// our force directed layout
-		this.force = d3.layout.force()
-		// color function used to color nodes
-		this.nodeColors = d3.scale.category20()
-		// tooltip used to display details
-		this.tooltip = Tooltip('vis-tooltip', 230)
-	}
+var svg = d3.select('svg'),
+	margin = { top: 20, right: 20, bottom: 20, left: 40 },
+	width = +svg.attr('width') - margin.left - margin.right,
+	height = +svg.attr('height') - margin.top - margin.bottom,
+	g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
 
-	network(selection, data) {}
+var x = d3.scaleLinear().domain([ 0, n - 1 ]).range([ 0, width ])
+var y = d3.scaleLinear().domain([ -1, 1 ]).range([ height, 0 ])
 
-	update() {
-		// filter data to show based on current filter settings.
-		curNodesData = filterNodes(allData.nodes)
-		curLinksData = filterLinks(allData.links, curNodesData)
+// Line generator
+var line = d3
+	.line()
+	.x(function(d, i) {
+		return x(i)
+	})
+	.y(function(d, i) {
+		return y(d)
+	})
 
-		// sort nodes based on current sort and update centers for
-		// radial layout
-		if (layout == 'radial') {
-			artists = sortedArtists(curNodesData, curLinksData)
-			updateCenters(artists)
-		}
+g
+	.append('g')
+	.attr('class', 'axis axis--x')
+	.attr('transform', 'translate(0,' + y(0) + ')')
+	.call(d3.axisBottom(x))
 
-		// reset nodes in force layout
-		force.nodes(curNodesData)
+g.append('g').attr('class', 'axis axis--y').call(d3.axisLeft(y))
 
-		// enter / exit for nodes
-		updateNodes()
+g
+	.append('path')
+	.datum(data)
+	.attr('class', 'line')
+	.attr('d', line)
+	.transition()
+	.duration(500)
+	.ease(d3.easeLinear)
+	.on('start', tick)
 
-		// always show links in force layout
-		if (layout == 'force') {
-			force.links(curLinksData)
-			updateLinks()
-		} else {
-			// reset links so they do not interfere with
-			// other layouts. updateLinks() will be called when
-			// force is done animating.
-			force.links([])
-			// if present, remove them from svg
-			if (link) {
-				link.data([]).exit().remove()
-				link = null
-			}
-		}
-
-		// start me up!
-		force.start()
-	}
-
-	toggleLayout(newLayout) {}
+function tick() {
+	// Push a new data point onto the back.
+	data.push(random())
+	// Pop the old data point off the front.
+	data.shift()
+	// Redraw the line (with the wrong interpolation).
+	d3.active(this).attr('d', line).transition().on('start', tick)
 }
-
-var myNetwork = new Network()
-
-d3.json('./data/songs.json').then(data => {
-	myNetwork.network('//vis', json)
-})
