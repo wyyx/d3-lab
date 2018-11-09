@@ -1,61 +1,70 @@
 import './styles.scss'
 import * as d3 from 'd3'
 
-var n = 40,
-	random = d3.randomNormal(0, 0.2),
-	data = d3.range(n).map(random)
+function gridData() {
+	var data = new Array()
+	var xpos = 1 //starting xpos and ypos at 1 so the stroke will show when we make the grid below
+	var ypos = 1
+	var width = 50
+	var height = 50
+	var click = 0
 
-var svg = d3.select('svg'),
-	margin = { top: 20, right: 20, bottom: 20, left: 40 },
-	width = +svg.attr('width') - margin.left - margin.right,
-	height = +svg.attr('height') - margin.top - margin.bottom,
-	g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-var x = d3.scaleLinear().domain([ 0, n - 1 ]).range([ 0, width ])
-var y = d3.scaleLinear().domain([ -1, 1 ]).range([ height, 0 ])
+	// iterate for rows
+	for (var row = 0; row < 10; row++) {
+		data.push(new Array())
 
-var line = d3
-	.line()
-	.x(function(d, i) {
-		return x(i)
-	})
-	.y(function(d, i) {
-		return y(d)
-	})
-
-g
-	.append('defs')
-	.append('clipPath')
-	.attr('id', 'clip')
-	.append('rect')
-	.attr('width', width)
-	.attr('height', height)
-
-g
-	.append('g')
-	.attr('class', 'axis axis--x')
-	.attr('transform', 'translate(0,' + y(0) + ')')
-	.call(d3.axisBottom(x))
-
-g.append('g').attr('class', 'axis axis--y').call(d3.axisLeft(y))
-
-g
-	.append('g')
-	.attr('clip-path', 'url(#clip)')
-	.append('path')
-	.datum(data)
-	.attr('class', 'line')
-	.transition()
-	.duration(500)
-	.ease(d3.easeLinear)
-	.on('start', tick)
-
-function tick() {
-	// Push a new data point onto the back.
-	data.push(random())
-	// Redraw the line.
-	d3.select(this).attr('d', line).attr('transform', null)
-	// Slide it to the left.
-	d3.active(this).attr('transform', 'translate(' + x(-1) + ',0)').transition().on('start', tick)
-	// Pop the old data point off the front.
-	data.shift()
+		// iterate for cells/columns inside rows
+		for (var column = 0; column < 10; column++) {
+			data[row].push({
+				x: xpos,
+				y: ypos,
+				width: width,
+				height: height,
+				click: click
+			})
+			// increment the x position. I.e. move it over by 50 (width variable)
+			xpos += width
+		}
+		// reset the x position after a row is complete
+		xpos = 1
+		// increment the y position for the next row. Move it down 50 (height variable)
+		ypos += height
+	}
+	return data
 }
+
+var data = gridData()
+// I like to log the data to the console for quick debugging
+console.log(data)
+
+var svg = d3.select('#grid').append('svg').attr('width', '510px').attr('height', '510px')
+
+var row = svg.selectAll('g').data(data).enter().append('g').attr('class', 'row')
+
+row
+	.selectAll('.square')
+	.data(data => data)
+	.enter()
+	.append('rect')
+	.attr('class', 'square')
+	.attr('width', d => d.width)
+	.attr('height', d => d.height)
+	.attr('x', d => d.x)
+	.attr('y', d => d.y)
+	.style('fill', '#fff')
+	.style('stroke', '#222')
+	.on('click', function(d) {
+		d.click++
+		if (d.click % 4 === 0) {
+			d3.select(this).style('fill', '#fff')
+		}
+		if (d.click % 4 === 1) {
+			d3.select(this).style('fill', '#2C93E8')
+		}
+		if (d.click % 4 === 2) {
+			d3.select(this).style('fill', '#F56C4E')
+		}
+		if (d.click % 4 === 3) {
+			d3.select(this).style('fill', '#838690')
+		}
+	})
