@@ -1,70 +1,82 @@
 import './styles.scss'
 import * as d3 from 'd3'
 
-function gridData() {
-	var data = new Array()
-	var xpos = 1 //starting xpos and ypos at 1 so the stroke will show when we make the grid below
-	var ypos = 1
-	var width = 50
-	var height = 50
-	var click = 0
-
-	// iterate for rows
-	for (var row = 0; row < 10; row++) {
-		data.push(new Array())
-
-		// iterate for cells/columns inside rows
-		for (var column = 0; column < 10; column++) {
-			data[row].push({
-				x: xpos,
-				y: ypos,
-				width: width,
-				height: height,
-				click: click
-			})
-			// increment the x position. I.e. move it over by 50 (width variable)
-			xpos += width
+var nodeData = {
+	name: 'TOPICS',
+	children: [
+		{
+			name: 'Topic A',
+			children: [ { name: 'Sub A1', size: 4 }, { name: 'Sub A2', size: 4 } ]
+		},
+		{
+			name: 'Topic B',
+			children: [
+				{ name: 'Sub B1', size: 3 },
+				{ name: 'Sub B2', size: 3 },
+				{
+					name: 'Sub B3',
+					size: 3
+				}
+			]
+		},
+		{
+			name: 'Topic C',
+			children: [ { name: 'Sub A1', size: 4 }, { name: 'Sub A2', size: 4 } ]
 		}
-		// reset the x position after a row is complete
-		xpos = 1
-		// increment the y position for the next row. Move it down 50 (height variable)
-		ypos += height
-	}
-	return data
+	]
 }
 
-var data = gridData()
-// I like to log the data to the console for quick debugging
-console.log(data)
+var width = 500 // <-- 1
+var height = 500
+var radius = Math.min(width, height) / 2 // < -- 2
+var color = d3.scaleOrdinal(d3.schemeCategory10) // <-- 3
 
-var svg = d3.select('#grid').append('svg').attr('width', '510px').attr('height', '510px')
+var g = d3
+	.select('svg') // <-- 1
+	.attr('width', width) // <-- 2
+	.attr('height', height)
+	.append('g') // <-- 3
+	.attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')') // <-- 4
 
-var row = svg.selectAll('g').data(data).enter().append('g').attr('class', 'row')
+var partition = d3
+	.partition() // <-- 1
+	.size([ 2 * Math.PI, radius ]) // <-- 2
 
-row
-	.selectAll('.square')
-	.data(data => data)
-	.enter()
-	.append('rect')
-	.attr('class', 'square')
-	.attr('width', d => d.width)
-	.attr('height', d => d.height)
-	.attr('x', d => d.x)
-	.attr('y', d => d.y)
-	.style('fill', '#fff')
-	.style('stroke', '#222')
-	.on('click', function(d) {
-		d.click++
-		if (d.click % 4 === 0) {
-			d3.select(this).style('fill', '#fff')
-		}
-		if (d.click % 4 === 1) {
-			d3.select(this).style('fill', '#2C93E8')
-		}
-		if (d.click % 4 === 2) {
-			d3.select(this).style('fill', '#F56C4E')
-		}
-		if (d.click % 4 === 3) {
-			d3.select(this).style('fill', '#838690')
-		}
+var root = d3
+	.hierarchy(nodeData) // <-- 1
+	.sum(function(d) {
+		return d.size
+	}) // <-- 2
+
+partition(root) // <-- 1
+
+var arc = d3
+	.arc() // <-- 2
+	.startAngle(function(d) {
+		return d.x0
 	})
+	.endAngle(function(d) {
+		return d.x1
+	})
+	.innerRadius(function(d) {
+		return d.y0
+	})
+	.outerRadius(function(d) {
+		return d.y1
+	})
+
+g
+	.selectAll('path') // <-- 1
+	.data(root.descendants()) // <-- 2
+	.enter() // <-- 3
+	.append('path') // <-- 4
+	.attr('display', function(d) {
+		return d.depth ? null : 'none'
+	}) // <-- 5
+	.attr('d', arc) // <-- 6
+	.style('stroke', '#fff') // <-- 7
+	.style('fill', function(d) {
+		console.log('color.domain()', color.domain())
+		console.log('d', d)
+		return color((d.children ? d : d.parent).data.name)
+	}) // <-- 8
